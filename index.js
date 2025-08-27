@@ -96,16 +96,13 @@ bot.action(/to_(.+)/, (ctx) => {
 // ✅ To‘g‘ri formatdagi vaqt
 bot.hears(/^\d{1,2}:\d{2}$/, (ctx) => {
   const id = ctx.from.id;
-  if (!userData[id] || !userData[id].from || !userData[id].to) return;
 
   userData[id].time = ctx.message.text;
 
   const db = readDb();
-  // Foydalanuvchi buyurtma sonini oshirish
   if (db.users[id]) {
     db.users[id].order_count++;
   }
-  // Buyurtmani bazaga yozish
   db.orders.push({
     userId: id,
     username: ctx.from.username,
