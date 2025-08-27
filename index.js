@@ -132,9 +132,6 @@ bot.on("text", (ctx) => {
     return ctx.reply("❌ Iltimos, tugmalardan foydalaning!");
   }
 
-  if (!userData[id].time) {
-    return ctx.reply("⏰ Vaqtni to‘g‘ri formatda yozing! Masalan: 15:30");
-  }
 });
 
 // Admin panel
