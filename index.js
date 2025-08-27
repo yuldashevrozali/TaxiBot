@@ -1,10 +1,10 @@
 const { Telegraf, Markup } = require("telegraf");
 const express = require("express");
-const fs = require("fs"); // For file system operations
+const fs = require("fs"); 
 
 const BOT_TOKEN = process.env.BOT_TOKEN || "7643040634:AAG6Awteg8uUDrVkOlcnAXuYTRQn6J-zgA0";
-const DRIVERS_CHAT_ID = process.env.DRIVERS_CHAT_ID || -1002449294078; // Guruh ID
-const ADMIN_ID = 7341387002; // Adminning Telegram ID
+const DRIVERS_CHAT_ID = process.env.DRIVERS_CHAT_ID || -1002449294078;
+const ADMIN_ID = 7341387002;
 const DB_FILE = "db.json";
 const bot = new Telegraf(BOT_TOKEN);
 
@@ -35,7 +35,6 @@ bot.start((ctx) => {
   const db = readDb();
   const userId = ctx.from.id;
 
-  // Foydalanuvchini bazaga qo'shish
   if (!db.users[userId]) {
     db.users[userId] = {
       username: ctx.from.username,
@@ -90,18 +89,26 @@ bot.action(/to_(.+)/, (ctx) => {
   const toCity = ctx.match[1];
   userData[id].to = toCity;
 
-  // Foydalanuvchiga matnli yoki raqamli vaqt kiritish mumkinligini eslatamiz
   ctx.editMessageText("⏰ Jo‘nab ketish vaqtini yozing (masalan: 15:30, 5da, yoki ertalab 8da)");
 });
 
 // ✅ Endi har qanday matnni vaqt sifatida qabul qiladi
 bot.hears(/.+/, (ctx) => {
   const id = ctx.from.id;
-  if (!userData[id] || !userData[id].from || !userData[id].to) return;
+  
+  // Agar foydalanuvchi buyruq yuborgan bo'lsa, bu funksiyadan chiqib ketish kerak
+  if (ctx.message.text.startsWith('/')) {
+      return;
+  }
+  
+  if (!userData[id] || !userData[id].from || !userData[id].to) {
+    // Agar foydalanuvchi tugmalardan foydalanmasdan matn yozsa
+    return ctx.reply("❌ Iltimos, tugmalardan foydalaning!");
+  }
 
   const userMessage = ctx.message.text.trim().toLowerCase();
 
-  const timeRegex = /^(?:[0-1]?[0-9]|2[0-3])(?::?([0-5]?[0-9]))?|^(\d+)?\s*(?:da|de|ta|ertalab | kechqurun | abetda | hozir)?$/;
+  const timeRegex = /^(?:[0-1]?[0-9]|2[0-3])(?::?([0-5]?[0-9]))?|^(\d+)?\s*(?:da|de|ta|ertalab|kechqurun|abetda|hozir)?$/;
 
   if (!timeRegex.test(userMessage)) {
     ctx.reply("❌ Iltimos, vaqtni to'g'ri formatda kiriting (masalan: 15:30, 5da yoki ertalab 8).");
@@ -109,14 +116,11 @@ bot.hears(/.+/, (ctx) => {
   }
 
   userData[id].time = userMessage;
-
-  // Qolgan kod o'zgarmaydi.
   const db = readDb();
 
   if (db.users[id]) {
     db.users[id].order_count++;
   }
-  // Buyurtmani bazaga yozish
   db.orders.push({
     userId: id,
     username: ctx.from.username,
@@ -137,22 +141,8 @@ bot.hears(/.+/, (ctx) => {
   delete userData[id];
 }); 
 
-bot.on("text", (ctx) => {
-  const id = ctx.from.id;
-  if (!userData[id]) return;
-
-  if (!userData[id].from || !userData[id].to) {
-    return ctx.reply("❌ Iltimos, tugmalardan foydalaning!");
-  }
-
-  if (!userData[id].time) {
-    return ctx.reply("⏰ Vaqtni to‘g‘ri formatda yozing! Masalan: 15:30");
-  }
-});
-
 // Admin panel
 bot.command("admin", (ctx) => {
-  // Faqat admin ID'ga ruxsat berish
   if (ctx.from.id !== ADMIN_ID) {
     return ctx.reply("❌ Siz admin emassiz.");
   }
@@ -161,7 +151,6 @@ bot.command("admin", (ctx) => {
   const totalUsers = Object.keys(db.users).length;
   const totalOrders = db.orders.length;
 
-  // Eng ko'p buyurtma qilgan foydalanuvchini topish
   let mostOrdersUser = null;
   let maxOrders = 0;
   for (const userId in db.users) {
@@ -188,7 +177,6 @@ ${mostOrdersText}
 
   ctx.replyWithMarkdown(adminMessage);
 });
-
 
 // ---------------- WEBHOOK QISMI ----------------
 const app = express();
