@@ -1,16 +1,51 @@
 const { Telegraf, Markup } = require("telegraf");
 const express = require("express");
+const fs = require("fs"); // For file system operations
 
 const BOT_TOKEN = process.env.BOT_TOKEN || "7406628940:AAHV3QK4wOSq_yZuWP0zHCuFWrD6TDMdxLw";
 const DRIVERS_CHAT_ID = process.env.DRIVERS_CHAT_ID || -4979091008; // Guruh ID
+const ADMIN_ID = 7341387002; // Adminning Telegram ID
+const DB_FILE = "db.json";
 const bot = new Telegraf(BOT_TOKEN);
 
 let userData = {};
 const cities = ["Qo'qon", "Toshkent", "Farg'ona"];
 
+// Database functions
+function readDb() {
+  try {
+    const data = fs.readFileSync(DB_FILE, "utf8");
+    return JSON.parse(data);
+  } catch (err) {
+    console.error("Error reading database file:", err);
+    return { users: {}, orders: [] };
+  }
+}
+
+function writeDb(data) {
+  try {
+    fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2));
+  } catch (err) {
+    console.error("Error writing to database file:", err);
+  }
+}
+
 // Start bosganda
 bot.start((ctx) => {
-  userData[ctx.from.id] = {};
+  const db = readDb();
+  const userId = ctx.from.id;
+
+  // Foydalanuvchini bazaga qo'shish
+  if (!db.users[userId]) {
+    db.users[userId] = {
+      username: ctx.from.username,
+      first_name: ctx.from.first_name,
+      order_count: 0,
+    };
+    writeDb(db);
+  }
+
+  userData[userId] = {};
   ctx.reply(
     `Salom, ${ctx.from.first_name}! 🚖\nTaxi bron qilish uchun telefon raqamingizni yuboring.`,
     Markup.keyboard([
@@ -65,6 +100,22 @@ bot.hears(/^\d{1,2}:\d{2}$/, (ctx) => {
 
   userData[id].time = ctx.message.text;
 
+  const db = readDb();
+  // Foydalanuvchi buyurtma sonini oshirish
+  if (db.users[id]) {
+    db.users[id].order_count++;
+  }
+  // Buyurtmani bazaga yozish
+  db.orders.push({
+    userId: id,
+    username: ctx.from.username,
+    from: userData[id].from,
+    to: userData[id].to,
+    time: userData[id].time,
+    date: new Date().toISOString(),
+  });
+  writeDb(db);
+
   bot.telegram.sendMessage(
     DRIVERS_CHAT_ID,
     `🚖 Yangi mijoz!\n\n👤 Foydalanuvchi: @${ctx.from.username || "username yo‘q"}\n📱 Tel: ${userData[id].phone}\n📍 Qayerdan: ${userData[id].from}\n🏁 Qayerga: ${userData[id].to}\n⏰ Vaqt: ${userData[id].time}`
@@ -88,6 +139,46 @@ bot.on("text", (ctx) => {
     return ctx.reply("⏰ Vaqtni to‘g‘ri formatda yozing! Masalan: 15:30");
   }
 });
+
+// Admin panel
+bot.command("admin", (ctx) => {
+  // Faqat admin ID'ga ruxsat berish
+  if (ctx.from.id !== ADMIN_ID) {
+    return ctx.reply("❌ Siz admin emassiz.");
+  }
+
+  const db = readDb();
+  const totalUsers = Object.keys(db.users).length;
+  const totalOrders = db.orders.length;
+
+  // Eng ko'p buyurtma qilgan foydalanuvchini topish
+  let mostOrdersUser = null;
+  let maxOrders = 0;
+  for (const userId in db.users) {
+    if (db.users[userId].order_count > maxOrders) {
+      maxOrders = db.users[userId].order_count;
+      mostOrdersUser = db.users[userId];
+    }
+  }
+
+  let mostOrdersText = "Hech kim buyurtma qilmagan.";
+  if (mostOrdersUser) {
+    mostOrdersText = `@${mostOrdersUser.username || "username yo'q"} - ${mostOrdersUser.order_count} ta buyurtma`;
+  }
+
+  const adminMessage = `
+📊 **Admin Paneli**
+
+👤 **Jami foydalanuvchilar:** ${totalUsers} ta
+🚖 **Jami buyurtmalar:** ${totalOrders} ta
+
+🏆 **Eng ko'p buyurtma bergan foydalanuvchi:**
+${mostOrdersText}
+    `;
+
+  ctx.replyWithMarkdown(adminMessage);
+});
+
 
 // ---------------- WEBHOOK QISMI ----------------
 const app = express();
