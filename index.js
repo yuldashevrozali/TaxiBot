@@ -90,7 +90,8 @@ bot.action(/to_(.+)/, (ctx) => {
   const toCity = ctx.match[1];
   userData[id].to = toCity;
 
-  ctx.editMessageText("⏰ Jo‘nab ketish vaqtini yozing (masalan: 15:30)");
+  // Foydalanuvchiga matnli yoki raqamli vaqt kiritish mumkinligini eslatamiz
+  ctx.editMessageText("⏰ Jo‘nab ketish vaqtini yozing (masalan: 15:30, 5da, yoki ertalab 8da)");
 });
 
 // ✅ Endi har qanday matnni vaqt sifatida qabul qiladi
@@ -98,19 +99,20 @@ bot.hears(/.+/, (ctx) => {
   const id = ctx.from.id;
   if (!userData[id] || !userData[id].from || !userData[id].to) return;
 
-  const userMessage = ctx.message.text.trim();
+  const userMessage = ctx.message.text.trim().toLowerCase();
 
-  // Foydalanuvchi yuborgan matnning vaqt bo'lishini tekshiramiz.
-  // Bu esa raqamlardan iborat bo'lgan vaqt formatlarini ham qabul qilishga yordam beradi.
-  const timeRegex = /^(?:[0-1]?[0-9]|2[0-3])(?::?([0-5]?[0-9]))?$/;
+  // Vaqtni aniqlash uchun oddiy tekshiruv.
+  // Bu regex har qanday raqamni yoki "da" qo'shimchasi bilan kelgan so'zni topadi.
+  const timeRegex = /^(?:[0-1]?[0-9]|2[0-3])(?::?([0-5]?[0-9]))?|^(\d+)?\s*(?:da|de|ta)?$/;
+
   if (!timeRegex.test(userMessage)) {
-    // Agar kiritilgan matn vaqt formatiga mos kelmasa, xato xabarini yuboramiz.
-    ctx.reply("❌ Iltimos, vaqtni to'g'ri formatda kiriting (masalan: 15:30, 5, yoki 11).");
+    ctx.reply("❌ Iltimos, vaqtni to'g'ri formatda kiriting (masalan: 15:30, 5da yoki ertalab 8).");
     return;
   }
 
   userData[id].time = userMessage;
 
+  // Qolgan kod o'zgarmaydi.
   const db = readDb();
 
   if (db.users[id]) {
@@ -135,8 +137,7 @@ bot.hears(/.+/, (ctx) => {
   ctx.reply("✅ Buyurtmangiz qabul qilindi! Tez orada taksichi siz bilan bog‘lanadi. 🙌");
 
   delete userData[id];
-});
-
+}); 
 // ❌ Agar boshqa narsa yozsa
 bot.on("text", (ctx) => {
   const id = ctx.from.id;
