@@ -93,12 +93,23 @@ bot.action(/to_(.+)/, (ctx) => {
   ctx.editMessageText("⏰ Jo‘nab ketish vaqtini yozing (masalan: 15:30)");
 });
 
-// ✅ To‘g‘ri formatdagi vaqt
-bot.hears( (ctx) => {
+// ✅ Endi har qanday matnni vaqt sifatida qabul qiladi
+bot.hears(/.+/, (ctx) => {
   const id = ctx.from.id;
   if (!userData[id] || !userData[id].from || !userData[id].to) return;
 
-  userData[id].time = ctx.message.text;
+  const userMessage = ctx.message.text.trim();
+
+  // Foydalanuvchi yuborgan matnning vaqt bo'lishini tekshiramiz.
+  // Bu esa raqamlardan iborat bo'lgan vaqt formatlarini ham qabul qilishga yordam beradi.
+  const timeRegex = /^(?:[0-1]?[0-9]|2[0-3])(?::?([0-5]?[0-9]))?$/;
+  if (!timeRegex.test(userMessage)) {
+    // Agar kiritilgan matn vaqt formatiga mos kelmasa, xato xabarini yuboramiz.
+    ctx.reply("❌ Iltimos, vaqtni to'g'ri formatda kiriting (masalan: 15:30, 5, yoki 11).");
+    return;
+  }
+
+  userData[id].time = userMessage;
 
   const db = readDb();
 
