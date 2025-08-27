@@ -1,7 +1,9 @@
 const { Telegraf, Markup } = require("telegraf");
+const express = require("express");
 
-const bot = new Telegraf("7406628940:AAHV3QK4wOSq_yZuWP0zHCuFWrD6TDMdxLw"); 
-const DRIVERS_CHAT_ID = -4979091008; // Guruh ID
+const BOT_TOKEN = process.env.BOT_TOKEN || "YOUR_BOT_TOKEN";
+const DRIVERS_CHAT_ID = process.env.DRIVERS_CHAT_ID || -4979091008; // Guruh ID
+const bot = new Telegraf(BOT_TOKEN);
 
 let userData = {};
 const cities = ["Qo'qon", "Toshkent", "Farg'ona"];
@@ -12,8 +14,10 @@ bot.start((ctx) => {
   ctx.reply(
     `Salom, ${ctx.from.first_name}! 🚖\nTaxi bron qilish uchun telefon raqamingizni yuboring.`,
     Markup.keyboard([
-      Markup.button.contactRequest("📱 Telefon raqamni yuborish")
-    ]).oneTime().resize()
+      Markup.button.contactRequest("📱 Telefon raqamni yuborish"),
+    ])
+      .oneTime()
+      .resize()
   );
 });
 
@@ -76,16 +80,32 @@ bot.on("text", (ctx) => {
   const id = ctx.from.id;
   if (!userData[id]) return;
 
-  // Agar FROM yoki TO tanlanmagan bo‘lsa
   if (!userData[id].from || !userData[id].to) {
     return ctx.reply("❌ Iltimos, tugmalardan foydalaning!");
   }
 
-  // Agar vaqt bosqichida bo‘lsa va noto‘g‘ri format yozsa
   if (!userData[id].time) {
     return ctx.reply("⏰ Vaqtni to‘g‘ri formatda yozing! Masalan: 15:30");
   }
 });
 
-bot.launch();
+// ---------------- WEBHOOK QISMI ----------------
+const app = express();
+app.use(express.json());
 
+// Telegram webhook
+app.use(bot.webhookCallback("/secret-path"));
+
+// Render yoki Vercel uchun PORT
+const PORT = process.env.PORT || 3000;
+
+// Webhook URL
+bot.telegram.setWebhook(`https://YOUR-APP-NAME.onrender.com/secret-path`);
+
+app.get("/", (req, res) => {
+  res.send("🚖 Taxi bot is running!");
+});
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
