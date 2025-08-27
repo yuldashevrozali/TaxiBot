@@ -101,9 +101,7 @@ bot.hears(/.+/, (ctx) => {
 
   const userMessage = ctx.message.text.trim().toLowerCase();
 
-  // Vaqtni aniqlash uchun oddiy tekshiruv.
-  // Bu regex har qanday raqamni yoki "da" qo'shimchasi bilan kelgan so'zni topadi.
-  const timeRegex = /^(?:[0-1]?[0-9]|2[0-3])(?::?([0-5]?[0-9]))?|^(\d+)?\s*(?:da|de|ta)?$/;
+  const timeRegex = /^(?:[0-1]?[0-9]|2[0-3])(?::?([0-5]?[0-9]))?|^(\d+)?\s*(?:da|de|ta|ertalab | kechqurun | abetda | hozir)?$/;
 
   if (!timeRegex.test(userMessage)) {
     ctx.reply("❌ Iltimos, vaqtni to'g'ri formatda kiriting (masalan: 15:30, 5da yoki ertalab 8).");
@@ -138,7 +136,7 @@ bot.hears(/.+/, (ctx) => {
 
   delete userData[id];
 }); 
-// ❌ Agar boshqa narsa yozsa
+
 bot.on("text", (ctx) => {
   const id = ctx.from.id;
   if (!userData[id]) return;
