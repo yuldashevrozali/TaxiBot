@@ -2,8 +2,8 @@ const { Telegraf, Markup } = require("telegraf");
 const express = require("express");
 const fs = require("fs"); // For file system operations
 
-const BOT_TOKEN = process.env.BOT_TOKEN || "7406628940:AAHV3QK4wOSq_yZuWP0zHCuFWrD6TDMdxLw";
-const DRIVERS_CHAT_ID = process.env.DRIVERS_CHAT_ID || -4979091008; // Guruh ID
+const BOT_TOKEN = process.env.BOT_TOKEN || "7643040634:AAG6Awteg8uUDrVkOlcnAXuYTRQn6J-zgA0";
+const DRIVERS_CHAT_ID = process.env.DRIVERS_CHAT_ID || -1002449294078; // Guruh ID
 const ADMIN_ID = 7341387002; // Adminning Telegram ID
 const DB_FILE = "db.json";
 const bot = new Telegraf(BOT_TOKEN);
