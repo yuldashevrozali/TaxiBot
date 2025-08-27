@@ -1,7 +1,7 @@
 const { Telegraf, Markup } = require("telegraf");
 const express = require("express");
 
-const BOT_TOKEN = process.env.BOT_TOKEN || "YOUR_BOT_TOKEN";
+const BOT_TOKEN = process.env.BOT_TOKEN || "7406628940:AAHV3QK4wOSq_yZuWP0zHCuFWrD6TDMdxLw";
 const DRIVERS_CHAT_ID = process.env.DRIVERS_CHAT_ID || -4979091008; // Guruh ID
 const bot = new Telegraf(BOT_TOKEN);
 
@@ -100,7 +100,7 @@ app.use(bot.webhookCallback("/secret-path"));
 const PORT = process.env.PORT || 3000;
 
 // Webhook URL
-bot.telegram.setWebhook(`https://YOUR-APP-NAME.onrender.com/secret-path`);
+bot.telegram.setWebhook(`https://taxibot-fqot.onrender.com/secret-path`);
 
 app.get("/", (req, res) => {
   res.send("🚖 Taxi bot is running!");
